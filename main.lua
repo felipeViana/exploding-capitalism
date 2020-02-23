@@ -1,10 +1,14 @@
+local sti = require "sti"
+
 function love.load()
-   image = love.graphics.newImage("assets/marx-frente-1.png")
+   image = love.graphics.newImage("assets/imgs/marx-frente-1.png")
    love.graphics.setNewFont(12)
    love.graphics.setColor(255,255,255)
    love.graphics.setBackgroundColor(0,0,0)
    text = ""
    gameIsPaused = false
+
+   map = sti("assets/maps/map1.lua")
 end
 
 function love.update(dt)
@@ -15,12 +19,16 @@ function love.update(dt)
   if love.keyboard.isDown("up") then
     num = num + 100 * dt -- this would increment num by 100 per second
   end
+
+  map:update(dt)
 end
 
 function love.draw()
    love.graphics.draw(image, imgx, imgy)
    love.graphics.print("Click and drag the cake around or use the arrow keys", 10, 10)
    love.graphics.print(text)
+
+   map:draw()
 end
 
 function love.mousepressed(x, y, button, istouch)
