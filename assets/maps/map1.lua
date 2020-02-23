@@ -9,7 +9,7 @@ return {
   tilewidth = 32,
   tileheight = 32,
   nextlayerid = 6,
-  nextobjectid = 1,
+  nextobjectid = 6,
   properties = {},
   tilesets = {
     {
@@ -89,6 +89,32 @@ return {
       terrains = {},
       tilecount = 1,
       tiles = {}
+    },
+    {
+      name = "green",
+      firstgid = 4,
+      filename = "../tiles/green.tsx",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 1,
+      image = "../tiles/tile-green.png",
+      imagewidth = 32,
+      imageheight = 32,
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      terrains = {},
+      tilecount = 1,
+      tiles = {}
     }
   },
   layers = {
@@ -108,7 +134,6 @@ return {
       encoding = "lua",
       data = {
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1,
         1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
         1, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1,
         1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
@@ -120,21 +145,36 @@ return {
         1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
         1, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1,
         1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1,
+        1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
       }
     },
     {
       type = "objectgroup",
       id = 2,
-      name = "Player",
+      name = "Spawn Point",
       visible = true,
       opacity = 1,
       offsetx = 0,
       offsety = 0,
       draworder = "topdown",
       properties = {},
-      objects = {}
+      objects = {
+        {
+          id = 1,
+          name = "Player",
+          type = "Player",
+          shape = "rectangle",
+          x = 32,
+          y = 32,
+          width = 32,
+          height = 32,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        }
+      }
     }
   }
 }
