@@ -34,6 +34,15 @@ function initial_loads.load_imgs()
   enemyFrente1 = love.graphics.newImage("assets/imgs/enemy1-frente-1.png")
   enemyFrente2 = love.graphics.newImage("assets/imgs/enemy1-frente-2.png")
   enemyFrente3 = love.graphics.newImage("assets/imgs/enemy1-frente-3.png")
+
+  enemyCostas1 = love.graphics.newImage("assets/imgs/enemy1-costas-1.png")
+  enemyCostas2 = love.graphics.newImage("assets/imgs/enemy1-costas-2.png")
+  enemyCostas3 = love.graphics.newImage("assets/imgs/enemy1-costas-3.png")
+
+  enemyLado1 = love.graphics.newImage("assets/imgs/enemy1-lado-1.png")
+  enemyLado2 = love.graphics.newImage("assets/imgs/enemy1-lado-2.png")
+  enemyLado3 = love.graphics.newImage("assets/imgs/enemy1-lado-3.png")
+
 end
 
 

@@ -1,9 +1,12 @@
 local sti = require "sti"
 local initial_loads = require "initial_loads"
 local getPlayerSprites = require "getPlayerSprites"
+local getEnemySprites = require "getEnemySprites"
 local getBombSprites = require "getBombSprites"
 
 FULLSCREEN = false
+
+ENEMY_SPEED = 36
 
 TILE_SIZE = 32
 SPRITES_SIZE = 600
@@ -47,6 +50,11 @@ playerDeathFrame = 0
 DEATH_TOTAL_TIME = 24 * 2
 
 EXPLOSION_SIZE = 3
+
+enemy1Alive = true
+enemy1Direction = DIRECTIONS.up
+
+gameFrame = 0
 
 function love.load()
   initial_loads.load_imgs()
@@ -101,6 +109,7 @@ function love.load()
 
   layer.update = function(self, dt)
     updatePlayer(self.player, dt)
+    updateEnemy1(self.enemy1, dt)
   end
 
   layer.draw = function(self)
@@ -111,6 +120,61 @@ function love.load()
 
   -- Remove unneeded object layer
   map:removeLayer("Spawn Point")
+end
+
+function killPlayerAt(x, y)
+  explodePlayerAt(x, y)
+end
+
+function adjustToTileCoordinates(x)
+  return math.floor(x/TILE_SIZE + 0.5) * TILE_SIZE
+end
+
+function closestInteger(x)
+  return math.floor(x + 0.5)
+end
+
+function reachesTile(object, x, y)
+  if closestInteger(object.x) == x and closestInteger(object.y) == y then
+    return true
+  end
+  return false
+end
+
+function updateEnemy1(enemy, dt)
+  killPlayerAt(adjustToTileCoordinates(enemy.x), adjustToTileCoordinates(enemy.y))
+
+  if enemy1Direction == DIRECTIONS.up then
+    enemy.y = enemy.y - ENEMY_SPEED * dt
+  elseif enemy1Direction == DIRECTIONS.right then
+    enemy.x = enemy.x + ENEMY_SPEED * dt
+  elseif enemy1Direction == DIRECTIONS.down then
+    enemy.y = enemy.y + ENEMY_SPEED * dt
+  else
+    enemy.x = enemy.x - ENEMY_SPEED * dt
+  end
+
+  if reachesTile(enemy, 288, 126-TILE_SIZE) then
+    enemy1Direction = DIRECTIONS.right
+  elseif reachesTile(enemy, 288+TILE_SIZE*2, 126-TILE_SIZE) then
+    enemy1Direction = DIRECTIONS.down
+  elseif reachesTile(enemy, 288+TILE_SIZE*2, 126+TILE_SIZE) then
+    enemy1Direction = DIRECTIONS.left
+  elseif reachesTile(enemy, 288, 126+TILE_SIZE) then
+    enemy1Direction = DIRECTIONS.up
+  end
+
+  updateEnemySprite(enemy, enemy1Direction)
+end
+
+function updateEnemySprite(enemy, direction)
+  if direction == DIRECTIONS.down then
+    enemy.sprite = getEnemySprites.frente()
+  elseif direction == DIRECTIONS.up then
+    enemy.sprite = getEnemySprites.costas()
+  elseif direction == DIRECTIONS.right or direction == DIRECTIONS.left then
+    enemy.sprite = getEnemySprites.lado()
+  end
 end
 
 function updatePlayer(player, dt)
@@ -194,16 +258,33 @@ function updatePlayer(player, dt)
 end
 
 function drawEnemy1()
+  if not enemy1Alive then
+    return
+  end
+
   local enemy = map.layers["Sprites"].enemy1
 
-  love.graphics.draw(
-    enemy.sprite,
-    math.floor(enemy.x),
-    math.floor(enemy.y),
-    0,
-    SCALE_FACTOR,
-    SCALE_FACTOR
-  )
+  if enemy1Direction == DIRECTIONS.left then
+    love.graphics.draw(
+      enemy.sprite,
+      math.floor(enemy.x),
+      math.floor(enemy.y),
+      0,
+      -SCALE_FACTOR,
+      SCALE_FACTOR,
+      SPRITES_SIZE,
+      0
+    )
+  else
+    love.graphics.draw(
+      enemy.sprite,
+      math.floor(enemy.x),
+      math.floor(enemy.y),
+      0,
+      SCALE_FACTOR,
+      SCALE_FACTOR
+    )
+  end
 end
 
 function drawPlayer()
@@ -266,11 +347,25 @@ end
 
 function explodePlayerAt(x, y)
   local player = map.layers["Sprites"].player
-  playerX = math.floor(player.x/TILE_SIZE + 0.5) * TILE_SIZE
-  playerY = math.floor(player.y/TILE_SIZE + 0.5) * TILE_SIZE
+  playerX = adjustToTileCoordinates(player.x)
+  playerY = adjustToTileCoordinates(player.y)
 
   if playerX == x and playerY == y then
     killPlayer()
+  end
+end
+
+function killEnemy1()
+  enemy1Alive = false
+end
+
+function explodeEnemy1At(x, y)
+  local enemy = map.layers["Sprites"].enemy1
+  enemyX = math.floor(enemy.x/TILE_SIZE + 0.5) * TILE_SIZE
+  enemyY = math.floor(enemy.y/TILE_SIZE + 0.5) * TILE_SIZE
+
+  if enemyX == x and enemyY == y then
+    killEnemy1()
   end
 end
 
@@ -305,6 +400,9 @@ function updateBomb()
     for i=-EXPLOSION_SIZE, EXPLOSION_SIZE do
       explodePlayerAt(bombX + i * TILE_SIZE, bombY)
       explodePlayerAt(bombX, bombY + i * TILE_SIZE)
+
+      explodeEnemy1At(bombX + i * TILE_SIZE, bombY)
+      explodeEnemy1At(bombX, bombY + i * TILE_SIZE)
     end
 
     if bombTime > BOMB_EXPLOSION_LIFE_TIME then
@@ -350,6 +448,11 @@ end
 function love.update(dt)
   if gameIsPaused then
     return
+  end
+
+  gameFrame = gameFrame + 1
+  if gameFrame > animationTime then
+    gameFrame = 0
   end
 
   updateImmunity()
@@ -411,12 +514,17 @@ function love.draw()
   drawMap()
 
   local player = map.layers["Sprites"].player
+  local enemy1 = map.layers["Sprites"].enemy1
   love.graphics.print("player position")
   love.graphics.print(player.x, 0, 10)
   love.graphics.print(player.y, 0, 20)
 
   love.graphics.print("lives", 0, 30)
   love.graphics.print(lives, 0, 40)
+
+  love.graphics.print("enemy position", 0, 50)
+  love.graphics.print(enemy1.x, 0, 60)
+  love.graphics.print(enemy1.y, 0, 70)
 
   if gameIsPaused then
     love.graphics.setFont(BigFont)
