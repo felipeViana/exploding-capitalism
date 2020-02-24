@@ -16,14 +16,16 @@ function initial_loads.load_imgs()
   marxDying1 = love.graphics.newImage("assets/imgs/marx-dying-1.png")
   marxDying2 = love.graphics.newImage("assets/imgs/marx-dying-2.png")
   marxDying3 = love.graphics.newImage("assets/imgs/marx-dying-3.png")
+  marxDying4 = love.graphics.newImage("assets/imgs/marx-dying-4.png")
 
   bomb1 = love.graphics.newImage("assets/imgs/bomb-1.png")
   bomb2 = love.graphics.newImage("assets/imgs/bomb-2.png")
   bomb3 = love.graphics.newImage("assets/imgs/bomb-3.png")
 
-  playerSprites = {
-    marxFrente1, marxFrente2, marxFrente3
-  }
+  explosionCenter1 = love.graphics.newImage("assets/imgs/explosion-center-1.png")
+  explosionCenter2 = love.graphics.newImage("assets/imgs/explosion-center-2.png")
+  explosionCenter3 = love.graphics.newImage("assets/imgs/explosion-center-3.png")
+  explosionCenter4 = love.graphics.newImage("assets/imgs/explosion-center-4.png")
 end
 
 

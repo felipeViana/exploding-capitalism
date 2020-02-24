@@ -1,6 +1,9 @@
 local sti = require "sti"
 local initial_loads = require "initial_loads"
 local getPlayerSprites = require "getPlayerSprites"
+local getBombSprites = require "getBombSprites"
+
+FULLSCREEN = false
 
 TILE_SIZE = 32
 SPRITES_SIZE = 600
@@ -11,8 +14,6 @@ MAP_SCALE_FACTOR = 3
 AVAILABLE_MAP_SIZE = 13
 TOTAL_MAP_SIZE = 15
 
-FULLSCREEN = true
-
 DIRECTIONS = {
   up = {},
   down = {},
@@ -22,8 +23,28 @@ DIRECTIONS = {
 playerDirection = DIRECTIONS.down
 
 animationTime = 24
-frame = 0
+walkingFrame = 0
 walking = false
+
+deployBomb = false
+bombExists = false
+
+bombX = -1
+bombY = -1
+bombFrame = 0
+bombTime = 0
+BOMB_LIFE_TIME = 24*4
+BOMB_EXPLOSION_LIFE_TIME = 24 * 2
+
+lives = 5
+
+playerImmune = false
+immunityTime = 0
+IMMUNITY_TOTAL_TIME = 24 * 4
+
+playerDying = false
+playerDeathFrame = 0
+DEATH_TOTAL_TIME = 24 * 2
 
 function love.load()
   initial_loads.load_imgs()
@@ -58,8 +79,6 @@ function love.load()
     sprite = marxFrente1,
     x      = player.x,
     y      = player.y,
-    ox = 600,
-    oy = 600
   }
 
   player_tile_position = {
@@ -67,119 +86,207 @@ function love.load()
     y = 0,
   }
 
-  -- Add controls to player
   layer.update = function(self, dt)
-    local originalX = self.player.x
-    local originalY = self.player.y
-
-    -- Move player up
-    if love.keyboard.isDown("w") or love.keyboard.isDown("up") then
-      self.player.y = self.player.y - PLAYER_SPEED * dt
-      playerDirection = DIRECTIONS.up
-    end
-
-    -- Move player down
-    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then
-      self.player.y = self.player.y + PLAYER_SPEED * dt
-      playerDirection = DIRECTIONS.down
-    end
-
-    -- Move player left
-    if love.keyboard.isDown("a") or love.keyboard.isDown("left") then
-      self.player.x = self.player.x - PLAYER_SPEED * dt
-      playerDirection = DIRECTIONS.left
-    end
-
-    -- Move player right
-    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then
-      self.player.x = self.player.x + PLAYER_SPEED * dt
-      playerDirection = DIRECTIONS.right
-    end
-
-    walking = false
-    -- trying to move?
-    if self.player.x ~= originalX or self.player.y ~= originalY then
-      walking = true
-    end
-
-    -- limit walls
-    if self.player.x < TILE_SIZE then
-      self.player.x = TILE_SIZE
-    end
-    if self.player.x > TILE_SIZE * AVAILABLE_MAP_SIZE then
-      self.player.x = TILE_SIZE * AVAILABLE_MAP_SIZE
-    end
-    if self.player.y < TILE_SIZE then
-      self.player.y = TILE_SIZE
-    end
-    if self.player.y > TILE_SIZE * AVAILABLE_MAP_SIZE then
-      self.player.y = TILE_SIZE * AVAILABLE_MAP_SIZE
-    end
-
-    -- invalid moviment, collision block
-    local step1 = 1.25
-    local step2 = 2.75
-    for j=0, 5 do
-      for i=0, 5 do
-        if self.player.x / TILE_SIZE > step1 + i*2 and self.player.x / TILE_SIZE < step2 + i*2 and self.player.y / TILE_SIZE > step1 + j*2 and self.player.y / TILE_SIZE < step2 + j*2 then
-          -- if x was right, cancel y
-          if originalX / TILE_SIZE > step1 + i*2 and originalX / TILE_SIZE < step2 + i*2 then
-            self.player.y = originalY
-          end
-
-          -- if x was right, cancel x
-          if originalY / TILE_SIZE > step1 + j*2 and originalY / TILE_SIZE < step2 + j*2 then
-            self.player.x = originalX
-          end
-        end
-      end
-    end
-
-    player_tile_position.x = math.floor(self.player.x / TILE_SIZE - 1)
-    player_tile_position.y = math.floor(self.player.y / TILE_SIZE - 1)
+    updatePlayer(self.player, dt)
   end
 
-  -- Draw player
   layer.draw = function(self)
-    if playerDirection == DIRECTIONS.left then
-      love.graphics.draw(
-        self.player.sprite,
-        math.floor(self.player.x),
-        math.floor(self.player.y),
-        0,
-        -SCALE_FACTOR,
-        SCALE_FACTOR,
-        SPRITES_SIZE,
-        0
-      )
-    else
-      love.graphics.draw(
-        self.player.sprite,
-        math.floor(self.player.x),
-        math.floor(self.player.y),
-        0,
-        SCALE_FACTOR,
-        SCALE_FACTOR
-      )
-    end
-
-    -- love.graphics.setPointSize(5)
-    -- love.graphics.points(math.floor(self.player.x), math.floor(self.player.y))
+    drawBomb()
+    drawPlayer()
   end
 
   -- Remove unneeded object layer
   map:removeLayer("Spawn Point")
 end
 
-function love.update(dt)
-  if gameIsPaused then
+function updatePlayer(player, dt)
+  if playerDying then
+    playerDeathFrame = playerDeathFrame + 1
+    if playerDeathFrame > DEATH_TOTAL_TIME then
+      playerDying = false
+      playerDeathFrame = 0
+    end
     return
   end
 
-  if walking then
-    frame = frame + 1
+  local originalX = player.x
+  local originalY = player.y
+
+  -- Move player up
+  if love.keyboard.isDown("w") or love.keyboard.isDown("up") then
+    player.y = player.y - PLAYER_SPEED * dt
+    playerDirection = DIRECTIONS.up
   end
 
+  -- Move player down
+  if love.keyboard.isDown("s") or love.keyboard.isDown("down") then
+    player.y = player.y + PLAYER_SPEED * dt
+    playerDirection = DIRECTIONS.down
+  end
+
+  -- Move player left
+  if love.keyboard.isDown("a") or love.keyboard.isDown("left") then
+    player.x = player.x - PLAYER_SPEED * dt
+    playerDirection = DIRECTIONS.left
+  end
+
+  -- Move player right
+  if love.keyboard.isDown("d") or love.keyboard.isDown("right") then
+    player.x = player.x + PLAYER_SPEED * dt
+    playerDirection = DIRECTIONS.right
+  end
+
+  walking = false
+  -- trying to move?
+  if player.x ~= originalX or player.y ~= originalY then
+    walking = true
+  end
+
+  -- limit walls
+  if player.x < TILE_SIZE then
+    player.x = TILE_SIZE
+  end
+  if player.x > TILE_SIZE * AVAILABLE_MAP_SIZE then
+    player.x = TILE_SIZE * AVAILABLE_MAP_SIZE
+  end
+  if player.y < TILE_SIZE then
+    player.y = TILE_SIZE
+  end
+  if player.y > TILE_SIZE * AVAILABLE_MAP_SIZE then
+    player.y = TILE_SIZE * AVAILABLE_MAP_SIZE
+  end
+
+  -- invalid moviment, collision block
+  local step1 = 1.25
+  local step2 = 2.75
+  for j=0, 5 do
+    for i=0, 5 do
+      if player.x / TILE_SIZE > step1 + i*2 and player.x / TILE_SIZE < step2 + i*2 and player.y / TILE_SIZE > step1 + j*2 and player.y / TILE_SIZE < step2 + j*2 then
+        -- if x was right, cancel y
+        if originalX / TILE_SIZE > step1 + i*2 and originalX / TILE_SIZE < step2 + i*2 then
+          player.y = originalY
+        end
+
+        -- if x was right, cancel x
+        if originalY / TILE_SIZE > step1 + j*2 and originalY / TILE_SIZE < step2 + j*2 then
+          player.x = originalX
+        end
+      end
+    end
+  end
+
+  player_tile_position.x = math.floor(player.x / TILE_SIZE - 1)
+  player_tile_position.y = math.floor(player.y / TILE_SIZE - 1)
+end
+
+function drawPlayer()
+  local player = map.layers["Sprites"].player
+
+  if playerDying then
+    playerSprite = getPlayerSprites.death()
+  end
+
+  if playerDirection == DIRECTIONS.left then
+    love.graphics.draw(
+      player.sprite,
+      math.floor(player.x),
+      math.floor(player.y),
+      0,
+      -SCALE_FACTOR,
+      SCALE_FACTOR,
+      SPRITES_SIZE,
+      0
+    )
+  else
+    love.graphics.draw(
+      player.sprite,
+      math.floor(player.x),
+      math.floor(player.y),
+      0,
+      SCALE_FACTOR,
+      SCALE_FACTOR
+    )
+  end
+end
+
+function createBombAt(x, y)
+  bombX = x
+  bombY = y
+end
+
+function respawn()
+  playerDying = true
+  playerImmune = true
+  immunityTime = IMMUNITY_TOTAL_TIME
+end
+
+function gameOver()
+  love.event.quit(0)
+end
+
+function killPlayer()
+  if playerImmune then
+    return
+  end
+
+  lives = lives - 1
+  if lives < 0 then
+    gameOver()
+  else
+    respawn()
+  end
+end
+
+function explodePlayerAt(x, y)
+  local player = map.layers["Sprites"].player
+  playerX = math.floor(player.x/TILE_SIZE + 0.5) * TILE_SIZE
+  playerY = math.floor(player.y/TILE_SIZE + 0.5) * TILE_SIZE
+
+  if playerX == x and playerY == y then
+    killPlayer()
+  end
+end
+
+function updateBomb()
+  local player = map.layers["Sprites"].player
+  playerX = player.x
+  playerY = player.y
+
+  if deployBomb then
+    createBombAt(math.floor(playerX/TILE_SIZE+0.5)*TILE_SIZE, math.floor(playerY/TILE_SIZE+0.5)*TILE_SIZE)
+    bombExists = true
+    deployBomb = false
+  end
+
+  if bombExists then
+    bombTime = bombTime + 1
+    bombFrame = bombFrame + 1
+    if bombFrame > animationTime then
+      bombFrame = 0
+    end
+  end
+
+  if not bombExploding then
+    if bombTime > BOMB_LIFE_TIME then
+      bombExploding = true
+      bombTime = 0
+      bombFrame = 0
+    end
+  end
+
+  if bombExploding then
+    explodePlayerAt(bombX, bombY)
+
+    if bombTime > BOMB_EXPLOSION_LIFE_TIME then
+      bombExploding = false
+      bombTime = 0
+      bombFrame = 0
+      bombExists = false
+    end
+  end
+end
+
+function updateWalkingFrame()
   if playerDirection == DIRECTIONS.down then
     playerSprite = getPlayerSprites.frente()
   elseif playerDirection == DIRECTIONS.up then
@@ -190,14 +297,57 @@ function love.update(dt)
     playerSprite = getPlayerSprites.lado()
   end
 
-  if frame == animationTime then
-    frame = 0
+  if walking then
+    walkingFrame = walkingFrame + 1
   end
+
+  if walkingFrame == animationTime then
+    walkingFrame = 0
+  end
+end
+
+function updateImmunity()
+  if not playerImmune then
+    return
+  end
+
+  immunityTime = immunityTime - 1
+  if immunityTime == 0 then
+    playerImmune = false
+  end
+end
+
+function love.update(dt)
+  if gameIsPaused then
+    return
+  end
+
+  updateImmunity()
+  if not playerDying then
+    updateWalkingFrame()
+  end
+  updateBomb()
 
   map:update(dt)
 end
 
-function love.draw()
+function drawBomb()
+  if not bombExists then
+    return
+  end
+
+  if not bombExploding then
+    sprite = getBombSprites.exists()
+  end
+
+  if bombExploding then
+    sprite = getBombSprites.exploding()
+  end
+
+  love.graphics.draw(sprite, bombX, bombY, 0, SCALE_FACTOR, SCALE_FACTOR)
+end
+
+function drawMap( ... )
   local screen_width = love.graphics.getWidth() / MAP_SCALE_FACTOR
   local screen_height = love.graphics.getHeight() / MAP_SCALE_FACTOR
 
@@ -214,10 +364,18 @@ function love.draw()
   ty = math.min(ty, AVAILABLE_MAP_SIZE*TILE_SIZE - screen_height / 4 * 3)
 
   map:draw(-tx, -ty, MAP_SCALE_FACTOR, MAP_SCALE_FACTOR)
+end
 
+function love.draw()
+  drawMap()
+
+  local player = map.layers["Sprites"].player
   love.graphics.print("player position")
   love.graphics.print(player.x, 0, 10)
   love.graphics.print(player.y, 0, 20)
+
+  love.graphics.print("lives", 0, 30)
+  love.graphics.print(lives, 0, 40)
 
   if gameIsPaused then
     love.graphics.setFont(BigFont)
@@ -229,6 +387,12 @@ end
 function love.keypressed(key)
   if key == 'p' or key == 'kpenter' or key == 'return' then
     gameIsPaused = not gameIsPaused
+  end
+
+  if not bombExists then
+    if key == 'b' or key == 'space' then
+      deployBomb = true
+    end
   end
 end
 

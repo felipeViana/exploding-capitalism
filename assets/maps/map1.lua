@@ -279,6 +279,32 @@ return {
       terrains = {},
       tilecount = 1,
       tiles = {}
+    },
+    {
+      name = "border",
+      firstgid = 11,
+      filename = "../tiles/border.tsx",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 1,
+      image = "../tiles/border.png",
+      imagewidth = 32,
+      imageheight = 32,
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      terrains = {},
+      tilecount = 1,
+      tiles = {}
     }
   },
   layers = {
@@ -297,7 +323,7 @@ return {
       properties = {},
       encoding = "lua",
       data = {
-        7, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 8,
+        11, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11,
         7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
         7, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 8,
         7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
@@ -311,7 +337,7 @@ return {
         7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
         7, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 8,
         7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
-        7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 8
+        11, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 11
       }
     },
     {
