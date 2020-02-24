@@ -8,8 +8,8 @@ return {
   height = 15,
   tilewidth = 32,
   tileheight = 32,
-  nextlayerid = 8,
-  nextobjectid = 6,
+  nextlayerid = 11,
+  nextobjectid = 11,
   properties = {},
   tilesets = {
     {
@@ -358,6 +358,32 @@ return {
           shape = "rectangle",
           x = 32,
           y = 32,
+          width = 32,
+          height = 32,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 6,
+          name = "Enemy1",
+          type = "Enemy1",
+          shape = "rectangle",
+          x = 288,
+          y = 126,
+          width = 32,
+          height = 32,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 10,
+          name = "Enemy2",
+          type = "Enemy1",
+          shape = "rectangle",
+          x = 160,
+          y = 288,
           width = 32,
           height = 32,
           rotation = 0,

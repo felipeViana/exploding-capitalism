@@ -46,6 +46,8 @@ playerDying = false
 playerDeathFrame = 0
 DEATH_TOTAL_TIME = 24 * 2
 
+EXPLOSION_SIZE = 3
+
 function love.load()
   initial_loads.load_imgs()
 
@@ -67,10 +69,15 @@ function love.load()
 
   -- Get player spawn object
   local player
+  local enemy1
+  local enemy2
   for k, object in pairs(map.objects) do
     if object.name == "Player" then
       player = object
-      break
+    end
+
+    if object.name == "Enemy1" then
+      enemy1 = object
     end
   end
 
@@ -79,6 +86,12 @@ function love.load()
     sprite = marxFrente1,
     x      = player.x,
     y      = player.y,
+  }
+
+  layer.enemy1 = {
+    sprite = enemyFrente1,
+    x = enemy1.x,
+    y = enemy1.y
   }
 
   player_tile_position = {
@@ -92,6 +105,7 @@ function love.load()
 
   layer.draw = function(self)
     drawBomb()
+    drawEnemy1()
     drawPlayer()
   end
 
@@ -177,6 +191,19 @@ function updatePlayer(player, dt)
 
   player_tile_position.x = math.floor(player.x / TILE_SIZE - 1)
   player_tile_position.y = math.floor(player.y / TILE_SIZE - 1)
+end
+
+function drawEnemy1()
+  local enemy = map.layers["Sprites"].enemy1
+
+  love.graphics.draw(
+    enemy.sprite,
+    math.floor(enemy.x),
+    math.floor(enemy.y),
+    0,
+    SCALE_FACTOR,
+    SCALE_FACTOR
+  )
 end
 
 function drawPlayer()
@@ -275,7 +302,10 @@ function updateBomb()
   end
 
   if bombExploding then
-    explodePlayerAt(bombX, bombY)
+    for i=-EXPLOSION_SIZE, EXPLOSION_SIZE do
+      explodePlayerAt(bombX + i * TILE_SIZE, bombY)
+      explodePlayerAt(bombX, bombY + i * TILE_SIZE)
+    end
 
     if bombTime > BOMB_EXPLOSION_LIFE_TIME then
       bombExploding = false
@@ -338,16 +368,27 @@ function drawBomb()
 
   if not bombExploding then
     sprite = getBombSprites.exists()
+    love.graphics.draw(sprite, bombX, bombY, 0, SCALE_FACTOR, SCALE_FACTOR)
   end
 
   if bombExploding then
-    sprite = getBombSprites.exploding()
-  end
+    for i=-EXPLOSION_SIZE, EXPLOSION_SIZE do
+      sprite = getBombSprites.byIndex(i)
 
-  love.graphics.draw(sprite, bombX, bombY, 0, SCALE_FACTOR, SCALE_FACTOR)
+      if i < 0 then
+        love.graphics.draw(sprite, bombX + i * TILE_SIZE, bombY, 0, SCALE_FACTOR, SCALE_FACTOR)
+        love.graphics.draw(sprite, bombX + TILE_SIZE, bombY + i * TILE_SIZE, math.pi/2, SCALE_FACTOR, SCALE_FACTOR)
+      elseif i == 0 then
+        love.graphics.draw(sprite, bombX, bombY, 0, SCALE_FACTOR, SCALE_FACTOR)
+      else
+        love.graphics.draw(sprite, bombX + i * TILE_SIZE, bombY, 0, -SCALE_FACTOR, SCALE_FACTOR, SPRITES_SIZE, 0)
+        love.graphics.draw(sprite, bombX , bombY + i * TILE_SIZE + TILE_SIZE, math.pi/2*3, SCALE_FACTOR, SCALE_FACTOR)
+      end
+    end
+  end
 end
 
-function drawMap( ... )
+function drawMap()
   local screen_width = love.graphics.getWidth() / MAP_SCALE_FACTOR
   local screen_height = love.graphics.getHeight() / MAP_SCALE_FACTOR
 

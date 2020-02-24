@@ -13,7 +13,7 @@ function getBombSprites.exists()
   return sprite
 end
 
-function getBombSprites.exploding()
+function getBombSprites.explodingCenter()
   sprite = explosionCenter1
   if math.floor(bombFrame / animationTime*4) == 1 then
     sprite = explosionCenter2
@@ -24,6 +24,18 @@ function getBombSprites.exploding()
   end
 
   return sprite
+end
+
+function getBombSprites.byIndex(index)
+  if index == 0 then
+    return getBombSprites.explodingCenter()
+  elseif index == 1 or index == -1 then
+    return explosionMiddle
+  elseif index == 2 or index == -2 then
+    return explosionMiddleTail
+  elseif index == 3 or index == -3 then
+    return explosionTail
+  end
 end
 
 return getBombSprites

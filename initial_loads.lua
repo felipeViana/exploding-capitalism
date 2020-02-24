@@ -26,6 +26,14 @@ function initial_loads.load_imgs()
   explosionCenter2 = love.graphics.newImage("assets/imgs/explosion-center-2.png")
   explosionCenter3 = love.graphics.newImage("assets/imgs/explosion-center-3.png")
   explosionCenter4 = love.graphics.newImage("assets/imgs/explosion-center-4.png")
+
+  explosionMiddle = love.graphics.newImage("assets/imgs/explosion-middle.png")
+  explosionMiddleTail = love.graphics.newImage("assets/imgs/explosion-middle-tail.png")
+  explosionTail = love.graphics.newImage("assets/imgs/explosion-tail.png")
+
+  enemyFrente1 = love.graphics.newImage("assets/imgs/enemy1-frente-1.png")
+  enemyFrente2 = love.graphics.newImage("assets/imgs/enemy1-frente-2.png")
+  enemyFrente3 = love.graphics.newImage("assets/imgs/enemy1-frente-3.png")
 end
 
 
