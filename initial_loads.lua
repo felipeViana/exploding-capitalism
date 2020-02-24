@@ -20,6 +20,10 @@ function initial_loads.load_imgs()
   bomb1 = love.graphics.newImage("assets/imgs/bomb-1.png")
   bomb2 = love.graphics.newImage("assets/imgs/bomb-2.png")
   bomb3 = love.graphics.newImage("assets/imgs/bomb-3.png")
+
+  playerSprites = {
+    marxFrente1, marxFrente2, marxFrente3
+  }
 end
 
 

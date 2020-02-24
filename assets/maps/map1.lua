@@ -149,6 +149,136 @@ return {
           }
         }
       }
+    },
+    {
+      name = "tile1",
+      firstgid = 6,
+      filename = "../tiles/tile1.tsx",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 1,
+      image = "../tiles/tile1.jpg",
+      imagewidth = 32,
+      imageheight = 32,
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      terrains = {},
+      tilecount = 1,
+      tiles = {}
+    },
+    {
+      name = "border-left",
+      firstgid = 7,
+      filename = "../tiles/border-left.tsx",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 1,
+      image = "../tiles/border-left.jpg",
+      imagewidth = 32,
+      imageheight = 32,
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      terrains = {},
+      tilecount = 1,
+      tiles = {}
+    },
+    {
+      name = "border-right",
+      firstgid = 8,
+      filename = "../../../../Documents/border-right.tsx",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 1,
+      image = "../tiles/border-right.jpg",
+      imagewidth = 32,
+      imageheight = 32,
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      terrains = {},
+      tilecount = 1,
+      tiles = {}
+    },
+    {
+      name = "border-bottom",
+      firstgid = 9,
+      filename = "../../../../Documents/border-bottom.tsx",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 1,
+      image = "../tiles/border-bottom.jpg",
+      imagewidth = 32,
+      imageheight = 32,
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      terrains = {},
+      tilecount = 1,
+      tiles = {}
+    },
+    {
+      name = "border-top",
+      firstgid = 10,
+      filename = "../tiles/border-top.tsx",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 1,
+      image = "../tiles/border-top.jpg",
+      imagewidth = 32,
+      imageheight = 32,
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      terrains = {},
+      tilecount = 1,
+      tiles = {}
     }
   },
   layers = {
@@ -167,21 +297,21 @@ return {
       properties = {},
       encoding = "lua",
       data = {
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
-        1, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1,
-        1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
-        1, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1,
-        1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
-        1, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1,
-        1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
-        1, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1,
-        1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
-        1, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1,
-        1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
-        1, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 1,
-        1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+        7, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 8,
+        7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
+        7, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 8,
+        7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
+        7, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 8,
+        7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
+        7, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 8,
+        7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
+        7, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 8,
+        7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
+        7, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 8,
+        7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
+        7, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 6, 3, 8,
+        7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 8,
+        7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 8
       }
     },
     {

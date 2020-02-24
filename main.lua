@@ -1,5 +1,6 @@
 local sti = require "sti"
 local initial_loads = require "initial_loads"
+local getPlayerSprites = require "getPlayerSprites"
 
 TILE_SIZE = 32
 SPRITES_SIZE = 600
@@ -10,11 +11,28 @@ MAP_SCALE_FACTOR = 3
 AVAILABLE_MAP_SIZE = 13
 TOTAL_MAP_SIZE = 15
 
+FULLSCREEN = true
+
+DIRECTIONS = {
+  up = {},
+  down = {},
+  left = {},
+  right = {},
+}
+playerDirection = DIRECTIONS.down
+
+animationTime = 24
+frame = 0
+walking = false
+
 function love.load()
   initial_loads.load_imgs()
 
-  love.window.setMode(800, 600, {fullscreen = false})
-  -- love.window.setFullscreen(true)
+  if FULLSCREEN then
+    love.window.setFullscreen(true)
+  else
+    love.window.setMode(800, 600, {fullscreen = false})
+  end
 
   defaultFont = love.graphics.newFont(12)
   BigFont = love.graphics.newFont(36)
@@ -57,21 +75,31 @@ function love.load()
     -- Move player up
     if love.keyboard.isDown("w") or love.keyboard.isDown("up") then
       self.player.y = self.player.y - PLAYER_SPEED * dt
+      playerDirection = DIRECTIONS.up
     end
 
     -- Move player down
     if love.keyboard.isDown("s") or love.keyboard.isDown("down") then
       self.player.y = self.player.y + PLAYER_SPEED * dt
+      playerDirection = DIRECTIONS.down
     end
 
     -- Move player left
     if love.keyboard.isDown("a") or love.keyboard.isDown("left") then
       self.player.x = self.player.x - PLAYER_SPEED * dt
+      playerDirection = DIRECTIONS.left
     end
 
     -- Move player right
     if love.keyboard.isDown("d") or love.keyboard.isDown("right") then
       self.player.x = self.player.x + PLAYER_SPEED * dt
+      playerDirection = DIRECTIONS.right
+    end
+
+    walking = false
+    -- trying to move?
+    if self.player.x ~= originalX or self.player.y ~= originalY then
+      walking = true
     end
 
     -- limit walls
@@ -107,29 +135,36 @@ function love.load()
       end
     end
 
-
-
     player_tile_position.x = math.floor(self.player.x / TILE_SIZE - 1)
     player_tile_position.y = math.floor(self.player.y / TILE_SIZE - 1)
   end
 
   -- Draw player
   layer.draw = function(self)
-    love.graphics.draw(
-      self.player.sprite,
-      math.floor(self.player.x),
-      math.floor(self.player.y),
-      0,
-      SCALE_FACTOR,
-      SCALE_FACTOR
-      -- self.player.ox,
-      -- self.player.oy
-    )
+    if playerDirection == DIRECTIONS.left then
+      love.graphics.draw(
+        self.player.sprite,
+        math.floor(self.player.x),
+        math.floor(self.player.y),
+        0,
+        -SCALE_FACTOR,
+        SCALE_FACTOR,
+        SPRITES_SIZE,
+        0
+      )
+    else
+      love.graphics.draw(
+        self.player.sprite,
+        math.floor(self.player.x),
+        math.floor(self.player.y),
+        0,
+        SCALE_FACTOR,
+        SCALE_FACTOR
+      )
+    end
 
-    -- Temporarily draw a point at our location so we know
-    -- that our sprite is offset properly
-    love.graphics.setPointSize(5)
-    love.graphics.points(math.floor(self.player.x), math.floor(self.player.y))
+    -- love.graphics.setPointSize(5)
+    -- love.graphics.points(math.floor(self.player.x), math.floor(self.player.y))
   end
 
   -- Remove unneeded object layer
@@ -141,6 +176,24 @@ function love.update(dt)
     return
   end
 
+  if walking then
+    frame = frame + 1
+  end
+
+  if playerDirection == DIRECTIONS.down then
+    playerSprite = getPlayerSprites.frente()
+  elseif playerDirection == DIRECTIONS.up then
+    playerSprite = getPlayerSprites.costas()
+  elseif playerDirection == DIRECTIONS.left then
+    playerSprite = getPlayerSprites.lado()
+  elseif playerDirection == DIRECTIONS.right then
+    playerSprite = getPlayerSprites.lado()
+  end
+
+  if frame == animationTime then
+    frame = 0
+  end
+
   map:update(dt)
 end
 
@@ -148,9 +201,10 @@ function love.draw()
   local screen_width = love.graphics.getWidth() / MAP_SCALE_FACTOR
   local screen_height = love.graphics.getHeight() / MAP_SCALE_FACTOR
 
-  -- Translate world so that player is always centred
   local player = map.layers["Sprites"].player
+  player.sprite = playerSprite
 
+  -- Translate world so that player is always centred
   local tx = math.floor(player.x - 160)
   tx = math.max(tx, 0)
   tx = math.min(tx, AVAILABLE_MAP_SIZE*TILE_SIZE - screen_width / 4 * 3)
@@ -160,8 +214,6 @@ function love.draw()
   ty = math.min(ty, AVAILABLE_MAP_SIZE*TILE_SIZE - screen_height / 4 * 3)
 
   map:draw(-tx, -ty, MAP_SCALE_FACTOR, MAP_SCALE_FACTOR)
-
-  -- love.graphics.setColor(0, 0, 0)
 
   love.graphics.print("player position")
   love.graphics.print(player.x, 0, 10)
