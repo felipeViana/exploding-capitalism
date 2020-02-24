@@ -383,7 +383,7 @@ return {
           type = "Enemy1",
           shape = "rectangle",
           x = 160,
-          y = 288,
+          y = 256,
           width = 32,
           height = 32,
           rotation = 0,

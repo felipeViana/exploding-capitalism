@@ -43,7 +43,16 @@ function initial_loads.load_imgs()
   enemyLado2 = love.graphics.newImage("assets/imgs/enemy1-lado-2.png")
   enemyLado3 = love.graphics.newImage("assets/imgs/enemy1-lado-3.png")
 
-end
+  enemyDying1 = love.graphics.newImage("assets/imgs/enemy1-dying-1.png")
+  enemyDying2 = love.graphics.newImage("assets/imgs/enemy1-dying-2.png")
+  enemyDying3 = love.graphics.newImage("assets/imgs/enemy1-dying-3.png")
+  enemyDying4 = love.graphics.newImage("assets/imgs/enemy1-dying-4.png")
 
+  menuScreen = love.graphics.newImage("assets/imgs/cover.png")
+  instructionsScreen = love.graphics.newImage("assets/imgs/instructions.png")
+  storyScreen = love.graphics.newImage("assets/imgs/story.png")
+  winScreen = love.graphics.newImage("assets/imgs/win-screen.png")
+  gameOverScreen = love.graphics.newImage("assets/imgs/game-over-screen.png")
+end
 
 return initial_loads

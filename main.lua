@@ -4,7 +4,7 @@ local getPlayerSprites = require "getPlayerSprites"
 local getEnemySprites = require "getEnemySprites"
 local getBombSprites = require "getBombSprites"
 
-FULLSCREEN = false
+FULLSCREEN = true
 
 ENEMY_SPEED = 36
 
@@ -51,10 +51,9 @@ DEATH_TOTAL_TIME = 24 * 2
 
 EXPLOSION_SIZE = 3
 
-enemy1Alive = true
-enemy1Direction = DIRECTIONS.up
-
 gameFrame = 0
+
+gameState = "menu"
 
 function love.load()
   initial_loads.load_imgs()
@@ -66,6 +65,7 @@ function love.load()
   end
 
   defaultFont = love.graphics.newFont(12)
+  mediumFont = love.graphics.newFont(24)
   BigFont = love.graphics.newFont(36)
 
   gameIsPaused = false
@@ -87,6 +87,10 @@ function love.load()
     if object.name == "Enemy1" then
       enemy1 = object
     end
+
+    if object.name == "Enemy2" then
+      enemy2 = object
+    end
   end
 
   -- Create player object
@@ -99,7 +103,21 @@ function love.load()
   layer.enemy1 = {
     sprite = enemyFrente1,
     x = enemy1.x,
-    y = enemy1.y
+    y = enemy1.y,
+    direction = DIRECTIONS.up,
+    alive = true,
+    dying = false,
+    deathFrame = 0
+  }
+
+  layer.enemy2 = {
+    sprite = enemyFrente1,
+    x = enemy2.x,
+    y = enemy2.y,
+    direction = DIRECTIONS.up,
+    alive = true,
+    dying = false,
+    deathFrame = 0
   }
 
   player_tile_position = {
@@ -109,12 +127,14 @@ function love.load()
 
   layer.update = function(self, dt)
     updatePlayer(self.player, dt)
-    updateEnemy1(self.enemy1, dt)
+    updateEnemy(self.enemy1, dt, 288, 126)
+    updateEnemy(self.enemy2, dt, 160, 256)
   end
 
   layer.draw = function(self)
     drawBomb()
     drawEnemy1()
+    drawEnemy2()
     drawPlayer()
   end
 
@@ -141,34 +161,48 @@ function reachesTile(object, x, y)
   return false
 end
 
-function updateEnemy1(enemy, dt)
+function updateEnemy(enemy, dt, startingX, startingY)
+  updateEnemySprite(enemy, enemy.direction)
+
+  if enemy.dying then
+    enemy.deathFrame = enemy.deathFrame + 1
+    if enemy.deathFrame > DEATH_TOTAL_TIME then
+      enemy.alive = false
+    end
+    return
+  end
+
+  if not enemy.alive then
+    return
+  end
+
   killPlayerAt(adjustToTileCoordinates(enemy.x), adjustToTileCoordinates(enemy.y))
 
-  if enemy1Direction == DIRECTIONS.up then
+  if enemy.direction == DIRECTIONS.up then
     enemy.y = enemy.y - ENEMY_SPEED * dt
-  elseif enemy1Direction == DIRECTIONS.right then
+  elseif enemy.direction == DIRECTIONS.right then
     enemy.x = enemy.x + ENEMY_SPEED * dt
-  elseif enemy1Direction == DIRECTIONS.down then
+  elseif enemy.direction == DIRECTIONS.down then
     enemy.y = enemy.y + ENEMY_SPEED * dt
   else
     enemy.x = enemy.x - ENEMY_SPEED * dt
   end
 
-  if reachesTile(enemy, 288, 126-TILE_SIZE) then
-    enemy1Direction = DIRECTIONS.right
-  elseif reachesTile(enemy, 288+TILE_SIZE*2, 126-TILE_SIZE) then
-    enemy1Direction = DIRECTIONS.down
-  elseif reachesTile(enemy, 288+TILE_SIZE*2, 126+TILE_SIZE) then
-    enemy1Direction = DIRECTIONS.left
-  elseif reachesTile(enemy, 288, 126+TILE_SIZE) then
-    enemy1Direction = DIRECTIONS.up
+  if reachesTile(enemy, startingX, startingY-TILE_SIZE) then
+    enemy.direction = DIRECTIONS.right
+  elseif reachesTile(enemy, startingX+TILE_SIZE*2, startingY-TILE_SIZE) then
+    enemy.direction = DIRECTIONS.down
+  elseif reachesTile(enemy, startingX+TILE_SIZE*2, startingY+TILE_SIZE) then
+    enemy.direction = DIRECTIONS.left
+  elseif reachesTile(enemy, startingX, startingY+TILE_SIZE) then
+    enemy.direction = DIRECTIONS.up
   end
-
-  updateEnemySprite(enemy, enemy1Direction)
 end
 
 function updateEnemySprite(enemy, direction)
-  if direction == DIRECTIONS.down then
+  if enemy.dying then
+    enemy.sprite = getEnemySprites.death(enemy.deathFrame)
+  elseif direction == DIRECTIONS.down then
     enemy.sprite = getEnemySprites.frente()
   elseif direction == DIRECTIONS.up then
     enemy.sprite = getEnemySprites.costas()
@@ -258,13 +292,19 @@ function updatePlayer(player, dt)
 end
 
 function drawEnemy1()
-  if not enemy1Alive then
+  drawEnemy(map.layers["Sprites"].enemy1)
+end
+
+function drawEnemy2()
+  drawEnemy(map.layers["Sprites"].enemy2)
+end
+
+function drawEnemy(enemy)
+  if not enemy.alive then
     return
   end
 
-  local enemy = map.layers["Sprites"].enemy1
-
-  if enemy1Direction == DIRECTIONS.left then
+  if enemy.direction == DIRECTIONS.left then
     love.graphics.draw(
       enemy.sprite,
       math.floor(enemy.x),
@@ -329,7 +369,7 @@ function respawn()
 end
 
 function gameOver()
-  love.event.quit(0)
+  gameState = "gameOver"
 end
 
 function killPlayer()
@@ -355,8 +395,8 @@ function explodePlayerAt(x, y)
   end
 end
 
-function killEnemy1()
-  enemy1Alive = false
+function killEnemy(enemy)
+  enemy.dying = true
 end
 
 function explodeEnemy1At(x, y)
@@ -365,7 +405,17 @@ function explodeEnemy1At(x, y)
   enemyY = math.floor(enemy.y/TILE_SIZE + 0.5) * TILE_SIZE
 
   if enemyX == x and enemyY == y then
-    killEnemy1()
+    killEnemy(enemy)
+  end
+end
+
+function explodeEnemy2At(x, y)
+  local enemy = map.layers["Sprites"].enemy2
+  enemyX = math.floor(enemy.x/TILE_SIZE + 0.5) * TILE_SIZE
+  enemyY = math.floor(enemy.y/TILE_SIZE + 0.5) * TILE_SIZE
+
+  if enemyX == x and enemyY == y then
+    killEnemy(enemy)
   end
 end
 
@@ -403,6 +453,9 @@ function updateBomb()
 
       explodeEnemy1At(bombX + i * TILE_SIZE, bombY)
       explodeEnemy1At(bombX, bombY + i * TILE_SIZE)
+
+      explodeEnemy2At(bombX + i * TILE_SIZE, bombY)
+      explodeEnemy2At(bombX, bombY + i * TILE_SIZE)
     end
 
     if bombTime > BOMB_EXPLOSION_LIFE_TIME then
@@ -445,7 +498,30 @@ function updateImmunity()
   end
 end
 
+function allDead()
+  local enemy1 = map.layers["Sprites"].enemy1
+  local enemy2 = map.layers["Sprites"].enemy2
+
+  if not enemy1.alive and not enemy2.alive then
+    return true
+  else
+    return false
+  end
+end
+
+function checkIfWon()
+  if allDead() then
+    gameState = "won"
+  end
+end
+
 function love.update(dt)
+  if gameState == "quitting" then
+    love.event.quit(0)
+  end
+
+  checkIfWon()
+
   if gameIsPaused then
     return
   end
@@ -511,36 +587,102 @@ function drawMap()
 end
 
 function love.draw()
-  drawMap()
+  local screenScale = 0.75
+  local screenPositionX = 100
+  local screenPositionY = 100
 
-  local player = map.layers["Sprites"].player
-  local enemy1 = map.layers["Sprites"].enemy1
-  love.graphics.print("player position")
-  love.graphics.print(player.x, 0, 10)
-  love.graphics.print(player.y, 0, 20)
+  if gameState == "menu" then
+    love.graphics.draw(menuScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
+  elseif gameState == "instructions" then
+    love.graphics.draw(instructionsScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
+  elseif gameState == "story" then
+    love.graphics.draw(storyScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
+  elseif gameState == "won" then
+    love.graphics.draw(winScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
+  elseif gameState == "gameOver" then
+    love.graphics.draw(gameOverScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
+  elseif gameState == "playing" then
+    drawMap()
 
-  love.graphics.print("lives", 0, 30)
-  love.graphics.print(lives, 0, 40)
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.setFont(mediumFont)
+    love.graphics.print({"Left: ", lives}, 80, 30, 0, 2, 2)
+    love.graphics.setColor(255, 255, 255)
 
-  love.graphics.print("enemy position", 0, 50)
-  love.graphics.print(enemy1.x, 0, 60)
-  love.graphics.print(enemy1.y, 0, 70)
+    if gameIsPaused then
+      love.graphics.setFont(BigFont)
+      love.graphics.setColor(0, 0, 0)
+      love.graphics.print("PAUSED", love.graphics.getWidth()/2 - 250, love.graphics.getHeight()/2 - 150, 0, 2, 2)
 
-  if gameIsPaused then
-    love.graphics.setFont(BigFont)
-    love.graphics.print("PAUSED", love.graphics.getWidth()/2 - 50, love.graphics.getHeight()/2 - 50)
-    love.graphics.setFont(defaultFont)
+      love.graphics.setColor(255, 255, 255)
+    end
   end
 end
 
-function love.keypressed(key)
-  if key == 'p' or key == 'kpenter' or key == 'return' then
-    gameIsPaused = not gameIsPaused
-  end
+function resetEverything()
+  lives = 5
+  local player = map.layers["Sprites"].player
+  player.x = 32
+  player.y = 32
 
-  if not bombExists then
-    if key == 'b' or key == 'space' then
-      deployBomb = true
+  local enemy1 = map.layers["Sprites"].enemy1
+  local enemy2 = map.layers["Sprites"].enemy2
+
+  enemy1.alive = true
+  enemy1.dying = false
+  enemy1.deathFrame = 0
+
+  enemy2.alive = true
+  enemy2.dying = false
+  enemy2.deathFrame = 0
+end
+
+function love.keypressed(key)
+  if gameState == "menu" then
+    if key == 'p' or key == 'kpenter' or key == 'return' then
+      gameState = "story"
+    end
+
+    if key == 'i' then
+      gameState = "instructions"
+    end
+
+    if key == 'q' then
+      gameState = "quitting"
+    end
+  elseif gameState == "instructions" then
+    if key == 'p' or key == 'kpenter' or key == 'return' then
+      gameState = "story"
+    end
+
+    if key == 'q' then
+      gameState = "quitting"
+    end
+  elseif gameState == "story" then
+    if key == 'p' or key == 'kpenter' or key == 'return' then
+      gameState = "playing"
+    end
+
+    if key == 'q' then
+      gameState = "quitting"
+    end
+  elseif gameState == "playing" then
+    if key == 'p' or key == 'kpenter' or key == 'return' then
+      gameIsPaused = not gameIsPaused
+    end
+
+    if not bombExists then
+      if key == 'b' or key == 'space' then
+        deployBomb = true
+      end
+    end
+  elseif gameState == "gameOver" or gameState == "won" then
+    if key == 'p' or key == 'kpenter' or key == 'return' then
+      gameState = "playing"
+      resetEverything()
+    end
+    if key == 'q' then
+      gameState = "quitting"
     end
   end
 end
