@@ -6,17 +6,19 @@ SPRITES_SIZE = 600
 SCALE_FACTOR = TILE_SIZE / SPRITES_SIZE
 PLAYER_SPEED = 96 -- pixels per second
 
-MAP_SCALE_FACTOR = 2
+MAP_SCALE_FACTOR = 3
 AVAILABLE_MAP_SIZE = 13
 TOTAL_MAP_SIZE = 15
 
 function love.load()
+  initial_loads.load_imgs()
+
+  love.window.setMode(800, 600, {fullscreen = false})
+  -- love.window.setFullscreen(true)
+
   defaultFont = love.graphics.newFont(12)
   BigFont = love.graphics.newFont(36)
 
-  -- love.graphics.setBackgroundColor(255, 0, 0)
-
-  initial_loads.load_imgs()
   gameIsPaused = false
 
   map = sti("assets/maps/map1.lua")
@@ -34,7 +36,6 @@ function love.load()
   end
 
   -- Create player object
-  -- local sprite = love.graphics.newImage("assets/tiles/tile-green.png")
   layer.player = {
     sprite = marxFrente1,
     x      = player.x,
@@ -50,6 +51,9 @@ function love.load()
 
   -- Add controls to player
   layer.update = function(self, dt)
+    local originalX = self.player.x
+    local originalY = self.player.y
+
     -- Move player up
     if love.keyboard.isDown("w") or love.keyboard.isDown("up") then
       self.player.y = self.player.y - PLAYER_SPEED * dt
@@ -83,6 +87,27 @@ function love.load()
     if self.player.y > TILE_SIZE * AVAILABLE_MAP_SIZE then
       self.player.y = TILE_SIZE * AVAILABLE_MAP_SIZE
     end
+
+    -- invalid moviment, collision block
+    local step1 = 1.25
+    local step2 = 2.75
+    for j=0, 5 do
+      for i=0, 5 do
+        if self.player.x / TILE_SIZE > step1 + i*2 and self.player.x / TILE_SIZE < step2 + i*2 and self.player.y / TILE_SIZE > step1 + j*2 and self.player.y / TILE_SIZE < step2 + j*2 then
+          -- if x was right, cancel y
+          if originalX / TILE_SIZE > step1 + i*2 and originalX / TILE_SIZE < step2 + i*2 then
+            self.player.y = originalY
+          end
+
+          -- if x was right, cancel x
+          if originalY / TILE_SIZE > step1 + j*2 and originalY / TILE_SIZE < step2 + j*2 then
+            self.player.x = originalX
+          end
+        end
+      end
+    end
+
+
 
     player_tile_position.x = math.floor(self.player.x / TILE_SIZE - 1)
     player_tile_position.y = math.floor(self.player.y / TILE_SIZE - 1)
@@ -125,6 +150,7 @@ function love.draw()
 
   -- Translate world so that player is always centred
   local player = map.layers["Sprites"].player
+
   local tx = math.floor(player.x - 160)
   tx = math.max(tx, 0)
   tx = math.min(tx, AVAILABLE_MAP_SIZE*TILE_SIZE - screen_width / 4 * 3)
@@ -137,9 +163,9 @@ function love.draw()
 
   -- love.graphics.setColor(0, 0, 0)
 
-  love.graphics.print("player tile position")
-  love.graphics.print(player_tile_position.x, 0, 10)
-  love.graphics.print(player_tile_position.y, 0, 20)
+  love.graphics.print("player position")
+  love.graphics.print(player.x, 0, 10)
+  love.graphics.print(player.y, 0, 20)
 
   if gameIsPaused then
     love.graphics.setFont(BigFont)
@@ -155,11 +181,6 @@ function love.keypressed(key)
 end
 
 function love.keyreleased(key)
-  -- if key == 'b' then
-  --   text = "The B key was released."
-  -- elseif key == 'a' then
-  --   a_down = false
-  -- end
 end
 
 function love.focus(f)
