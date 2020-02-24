@@ -7,16 +7,21 @@ SCALE_FACTOR = TILE_SIZE / SPRITES_SIZE
 PLAYER_SPEED = 96 -- pixels per second
 
 MAP_SCALE_FACTOR = 2
-AVAILABLE_MAP_SIZE = 14
-TOTAL_MAP_SIZE = 16
+AVAILABLE_MAP_SIZE = 13
+TOTAL_MAP_SIZE = 15
 
 function love.load()
+  defaultFont = love.graphics.newFont(12)
+  BigFont = love.graphics.newFont(36)
+
+  -- love.graphics.setBackgroundColor(255, 0, 0)
+
   initial_loads.load_imgs()
   gameIsPaused = false
 
   map = sti("assets/maps/map1.lua")
 
-  -- Create new dynamic data layer called "Sprites" as the 8th layer
+  -- Create new dynamic data layer called "Sprites" as the 3º layer
   local layer = map:addCustomLayer("Sprites", 3)
 
   -- Get player spawn object
@@ -38,9 +43,13 @@ function love.load()
     oy = 600
   }
 
+  player_tile_position = {
+    x = 0,
+    y = 0,
+  }
+
   -- Add controls to player
   layer.update = function(self, dt)
-
     -- Move player up
     if love.keyboard.isDown("w") or love.keyboard.isDown("up") then
       self.player.y = self.player.y - PLAYER_SPEED * dt
@@ -60,6 +69,23 @@ function love.load()
     if love.keyboard.isDown("d") or love.keyboard.isDown("right") then
       self.player.x = self.player.x + PLAYER_SPEED * dt
     end
+
+    -- limit walls
+    if self.player.x < TILE_SIZE then
+      self.player.x = TILE_SIZE
+    end
+    if self.player.x > TILE_SIZE * AVAILABLE_MAP_SIZE then
+      self.player.x = TILE_SIZE * AVAILABLE_MAP_SIZE
+    end
+    if self.player.y < TILE_SIZE then
+      self.player.y = TILE_SIZE
+    end
+    if self.player.y > TILE_SIZE * AVAILABLE_MAP_SIZE then
+      self.player.y = TILE_SIZE * AVAILABLE_MAP_SIZE
+    end
+
+    player_tile_position.x = math.floor(self.player.x / TILE_SIZE - 1)
+    player_tile_position.y = math.floor(self.player.y / TILE_SIZE - 1)
   end
 
   -- Draw player
@@ -101,21 +127,31 @@ function love.draw()
   local player = map.layers["Sprites"].player
   local tx = math.floor(player.x - 160)
   tx = math.max(tx, 0)
-  tx = math.min(tx, (AVAILABLE_MAP_SIZE/2+1)*TILE_SIZE)
+  tx = math.min(tx, AVAILABLE_MAP_SIZE*TILE_SIZE - screen_width / 4 * 3)
 
   local ty = math.floor(player.y - 80)
   ty = math.max(ty, 0)
-  ty = math.min(ty, AVAILABLE_MAP_SIZE*TILE_SIZE)
+  ty = math.min(ty, AVAILABLE_MAP_SIZE*TILE_SIZE - screen_height / 4 * 3)
 
   map:draw(-tx, -ty, MAP_SCALE_FACTOR, MAP_SCALE_FACTOR)
+
+  -- love.graphics.setColor(0, 0, 0)
+
+  love.graphics.print("player tile position")
+  love.graphics.print(player_tile_position.x, 0, 10)
+  love.graphics.print(player_tile_position.y, 0, 20)
+
+  if gameIsPaused then
+    love.graphics.setFont(BigFont)
+    love.graphics.print("PAUSED", love.graphics.getWidth()/2 - 50, love.graphics.getHeight()/2 - 50)
+    love.graphics.setFont(defaultFont)
+  end
 end
 
 function love.keypressed(key)
-   -- if key == 'b' then
-   --    text = "The B key was pressed."
-   -- elseif key == 'a' then
-   --    a_down = true
-   -- end
+  if key == 'p' or key == 'kpenter' or key == 'return' then
+    gameIsPaused = not gameIsPaused
+  end
 end
 
 function love.keyreleased(key)

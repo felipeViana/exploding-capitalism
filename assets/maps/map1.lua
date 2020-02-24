@@ -8,7 +8,7 @@ return {
   height = 15,
   tilewidth = 32,
   tileheight = 32,
-  nextlayerid = 6,
+  nextlayerid = 8,
   nextobjectid = 6,
   properties = {},
   tilesets = {
@@ -115,6 +115,40 @@ return {
       terrains = {},
       tilecount = 1,
       tiles = {}
+    },
+    {
+      name = "wall",
+      firstgid = 5,
+      filename = "../tiles/wall.tsx",
+      tilewidth = 32,
+      tileheight = 32,
+      spacing = 0,
+      margin = 0,
+      columns = 1,
+      image = "../tiles/tile-wall.png",
+      imagewidth = 32,
+      imageheight = 32,
+      tileoffset = {
+        x = 0,
+        y = 0
+      },
+      grid = {
+        orientation = "orthogonal",
+        width = 32,
+        height = 32
+      },
+      properties = {},
+      terrains = {},
+      tilecount = 1,
+      tiles = {
+        {
+          id = 0,
+          type = "Collidable",
+          properties = {
+            ["Collidable"] = true
+          }
+        }
+      }
     }
   },
   layers = {
@@ -174,6 +208,38 @@ return {
           visible = true,
           properties = {}
         }
+      }
+    },
+    {
+      type = "tilelayer",
+      id = 7,
+      name = "Meta",
+      x = 0,
+      y = 0,
+      width = 15,
+      height = 15,
+      visible = false,
+      opacity = 0.5,
+      offsetx = 0,
+      offsety = 0,
+      properties = {},
+      encoding = "lua",
+      data = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 0,
+        0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
       }
     }
   }
