@@ -1,5 +1,7 @@
 local sti = require "sti"
 local initial_loads = require "initial_loads"
+local assets = require "assets"
+
 local getPlayerSprites = require "getPlayerSprites"
 local getEnemySprites = require "getEnemySprites"
 local getBombSprites = require "getBombSprites"
@@ -7,7 +9,9 @@ local getBombSprites = require "getBombSprites"
 local IMAGES_X = 1920
 local IMAGES_Y = 1080
 
-local FULLSCREEN = true
+local FULLSCREEN = false
+
+local lives = 5
 
 local ENEMY_SPEED = 36
 
@@ -18,7 +22,6 @@ local PLAYER_SPEED = 96 -- pixels per second
 
 local MAP_SCALE_FACTOR = 3
 local AVAILABLE_MAP_SIZE = 13
-local TOTAL_MAP_SIZE = 15
 
 local DIRECTIONS = {
   up = {},
@@ -28,35 +31,46 @@ local DIRECTIONS = {
 }
 local playerDirection = DIRECTIONS.down
 
-animationTime = 24
-walkingFrame = 0
-walking = false
+local animationTime = 24
+local walkingFrame = 0
+local walking = false
 
 local deployBomb = false
 local bombExists = false
 
-bombX = -1
-bombY = -1
-bombFrame = 0
-bombTime = 0
-BOMB_LIFE_TIME = 24*4
-BOMB_EXPLOSION_LIFE_TIME = 24 * 2
+local bombX = -1
+local bombY = -1
+local bombFrame = 0
+local bombTime = 0
+local BOMB_LIFE_TIME = 24*4
+local BOMB_EXPLOSION_LIFE_TIME = 24 * 2
 
-lives = 5
+local playerImmune = false
+local immunityTime = 0
+local IMMUNITY_TOTAL_TIME = 24 * 4
 
-playerImmune = false
-immunityTime = 0
-IMMUNITY_TOTAL_TIME = 24 * 4
+local playerDying = false
+local playerDeathFrame = 0
+local DEATH_TOTAL_TIME = 24 * 2
 
-playerDying = false
-playerDeathFrame = 0
-DEATH_TOTAL_TIME = 24 * 2
+local EXPLOSION_SIZE = 3
 
-EXPLOSION_SIZE = 3
+local gameFrame = 0
 
-gameFrame = 0
+local gameState = "menu"
 
-gameState = "menu"
+local gameIsPaused = false
+
+local mediumFont
+local BigFont
+
+local map
+
+local bombExploding = false
+
+local playerSprite
+
+local love = love
 
 function love.load()
   initial_loads.load_imgs()
@@ -67,11 +81,8 @@ function love.load()
     love.window.setMode(800, 600, {fullscreen = false})
   end
 
-  defaultFont = love.graphics.newFont(12)
   mediumFont = love.graphics.newFont(24)
   BigFont = love.graphics.newFont(36)
-
-  gameIsPaused = false
 
   map = sti("assets/maps/map1.lua")
 
@@ -82,7 +93,7 @@ function love.load()
   local player
   local enemy1
   local enemy2
-  for k, object in pairs(map.objects) do
+  for _, object in pairs(map.objects) do
     if object.name == "Player" then
       player = object
     end
@@ -98,13 +109,13 @@ function love.load()
 
   -- Create player object
   layer.player = {
-    sprite = marxFrente1,
+    sprite = assets.marxFrente1,
     x      = player.x,
     y      = player.y,
   }
 
   layer.enemy1 = {
-    sprite = enemyFrente1,
+    sprite = assets.enemyFrente1,
     x = enemy1.x,
     y = enemy1.y,
     direction = DIRECTIONS.up,
@@ -114,7 +125,7 @@ function love.load()
   }
 
   layer.enemy2 = {
-    sprite = enemyFrente1,
+    sprite = assets.enemyFrente1,
     x = enemy2.x,
     y = enemy2.y,
     direction = DIRECTIONS.up,
@@ -123,18 +134,13 @@ function love.load()
     deathFrame = 0
   }
 
-  player_tile_position = {
-    x = 0,
-    y = 0,
-  }
-
   layer.update = function(self, dt)
     updatePlayer(self.player, dt)
     updateEnemy(self.enemy1, dt, 288, 126)
     updateEnemy(self.enemy2, dt, 160, 256)
   end
 
-  layer.draw = function(self)
+  layer.draw = function()
     drawBomb()
     drawEnemy1()
     drawEnemy2()
@@ -145,19 +151,19 @@ function love.load()
   map:removeLayer("Spawn Point")
 end
 
-function killPlayerAt(x, y)
+local function killPlayerAt(x, y)
   explodePlayerAt(x, y)
 end
 
-function adjustToTileCoordinates(x)
+local function adjustToTileCoordinates(x)
   return math.floor(x/TILE_SIZE + 0.5) * TILE_SIZE
 end
 
-function closestInteger(x)
+local function closestInteger(x)
   return math.floor(x + 0.5)
 end
 
-function reachesTile(object, x, y)
+local function reachesTile(object, x, y)
   if closestInteger(object.x) == x and closestInteger(object.y) == y then
     return true
   end
@@ -204,13 +210,13 @@ end
 
 function updateEnemySprite(enemy, direction)
   if enemy.dying then
-    enemy.sprite = getEnemySprites.death(enemy.deathFrame)
+    enemy.sprite = getEnemySprites.death(enemy.deathFrame, DEATH_TOTAL_TIME)
   elseif direction == DIRECTIONS.down then
-    enemy.sprite = getEnemySprites.frente()
+    enemy.sprite = getEnemySprites.frente(animationTime, gameFrame)
   elseif direction == DIRECTIONS.up then
-    enemy.sprite = getEnemySprites.costas()
+    enemy.sprite = getEnemySprites.costas(animationTime, gameFrame)
   elseif direction == DIRECTIONS.right or direction == DIRECTIONS.left then
-    enemy.sprite = getEnemySprites.lado()
+    enemy.sprite = getEnemySprites.lado(animationTime, gameFrame)
   end
 end
 
@@ -289,9 +295,6 @@ function updatePlayer(player, dt)
       end
     end
   end
-
-  player_tile_position.x = math.floor(player.x / TILE_SIZE - 1)
-  player_tile_position.y = math.floor(player.y / TILE_SIZE - 1)
 end
 
 function drawEnemy1()
@@ -334,7 +337,7 @@ function drawPlayer()
   local player = map.layers["Sprites"].player
 
   if playerDying then
-    playerSprite = getPlayerSprites.death()
+    playerSprite = getPlayerSprites.death(playerDeathFrame, DEATH_TOTAL_TIME)
   end
 
   if playerDirection == DIRECTIONS.left then
@@ -365,17 +368,17 @@ function createBombAt(x, y)
   bombY = y
 end
 
-function respawn()
+local function respawn()
   playerDying = true
   playerImmune = true
   immunityTime = IMMUNITY_TOTAL_TIME
 end
 
-function gameOver()
+local function gameOver()
   gameState = "gameOver"
 end
 
-function killPlayer()
+local function killPlayer()
   if playerImmune then
     return
   end
@@ -390,42 +393,42 @@ end
 
 function explodePlayerAt(x, y)
   local player = map.layers["Sprites"].player
-  playerX = adjustToTileCoordinates(player.x)
-  playerY = adjustToTileCoordinates(player.y)
+  local playerX = adjustToTileCoordinates(player.x)
+  local playerY = adjustToTileCoordinates(player.y)
 
   if playerX == x and playerY == y then
     killPlayer()
   end
 end
 
-function killEnemy(enemy)
+local function killEnemy(enemy)
   enemy.dying = true
 end
 
-function explodeEnemy1At(x, y)
+local function explodeEnemy1At(x, y)
   local enemy = map.layers["Sprites"].enemy1
-  enemyX = math.floor(enemy.x/TILE_SIZE + 0.5) * TILE_SIZE
-  enemyY = math.floor(enemy.y/TILE_SIZE + 0.5) * TILE_SIZE
+  local enemyX = math.floor(enemy.x/TILE_SIZE + 0.5) * TILE_SIZE
+  local enemyY = math.floor(enemy.y/TILE_SIZE + 0.5) * TILE_SIZE
 
   if enemyX == x and enemyY == y then
     killEnemy(enemy)
   end
 end
 
-function explodeEnemy2At(x, y)
+local function explodeEnemy2At(x, y)
   local enemy = map.layers["Sprites"].enemy2
-  enemyX = math.floor(enemy.x/TILE_SIZE + 0.5) * TILE_SIZE
-  enemyY = math.floor(enemy.y/TILE_SIZE + 0.5) * TILE_SIZE
+  local enemyX = math.floor(enemy.x/TILE_SIZE + 0.5) * TILE_SIZE
+  local enemyY = math.floor(enemy.y/TILE_SIZE + 0.5) * TILE_SIZE
 
   if enemyX == x and enemyY == y then
     killEnemy(enemy)
   end
 end
 
-function updateBomb()
+local function updateBomb()
   local player = map.layers["Sprites"].player
-  playerX = player.x
-  playerY = player.y
+  local playerX = player.x
+  local playerY = player.y
 
   if deployBomb then
     createBombAt(math.floor(playerX/TILE_SIZE+0.5)*TILE_SIZE, math.floor(playerY/TILE_SIZE+0.5)*TILE_SIZE)
@@ -470,15 +473,15 @@ function updateBomb()
   end
 end
 
-function updateWalkingFrame()
+local function updateWalkingFrame()
   if playerDirection == DIRECTIONS.down then
-    playerSprite = getPlayerSprites.frente()
+    playerSprite = getPlayerSprites.frente(animationTime, walkingFrame)
   elseif playerDirection == DIRECTIONS.up then
-    playerSprite = getPlayerSprites.costas()
+    playerSprite = getPlayerSprites.costas(animationTime, walkingFrame)
   elseif playerDirection == DIRECTIONS.left then
-    playerSprite = getPlayerSprites.lado()
+    playerSprite = getPlayerSprites.lado(animationTime, walkingFrame)
   elseif playerDirection == DIRECTIONS.right then
-    playerSprite = getPlayerSprites.lado()
+    playerSprite = getPlayerSprites.lado(animationTime, walkingFrame)
   end
 
   if walking then
@@ -490,7 +493,7 @@ function updateWalkingFrame()
   end
 end
 
-function updateImmunity()
+local function updateImmunity()
   if not playerImmune then
     return
   end
@@ -501,7 +504,7 @@ function updateImmunity()
   end
 end
 
-function allDead()
+local function areAllDead()
   local enemy1 = map.layers["Sprites"].enemy1
   local enemy2 = map.layers["Sprites"].enemy2
 
@@ -512,15 +515,15 @@ function allDead()
   end
 end
 
-function checkIfWon()
-  if allDead() then
+local function checkIfWon()
+  if areAllDead() then
     gameState = "won"
   end
 end
 
 function love.update(dt)
   if gameState == "quitting" then
-    love.event.quit(0)
+    love.event.quit()
   end
 
   checkIfWon()
@@ -549,13 +552,13 @@ function drawBomb()
   end
 
   if not bombExploding then
-    sprite = getBombSprites.exists()
+    local sprite = getBombSprites.exists(animationTime, bombFrame)
     love.graphics.draw(sprite, bombX, bombY, 0, SCALE_FACTOR, SCALE_FACTOR)
   end
 
   if bombExploding then
     for i=-EXPLOSION_SIZE, EXPLOSION_SIZE do
-      sprite = getBombSprites.byIndex(i)
+      local sprite = getBombSprites.byIndex(i, animationTime, bombFrame)
 
       if i < 0 then
         love.graphics.draw(sprite, bombX + i * TILE_SIZE, bombY, 0, SCALE_FACTOR, SCALE_FACTOR)
@@ -570,7 +573,7 @@ function drawBomb()
   end
 end
 
-function drawMap()
+local function drawMap()
   local screen_width = love.graphics.getWidth() / MAP_SCALE_FACTOR
   local screen_height = love.graphics.getHeight() / MAP_SCALE_FACTOR
 
@@ -596,15 +599,15 @@ function love.draw()
   local screenPositionY = dy/2
 
   if gameState == "menu" then
-    love.graphics.draw(menuScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
+    love.graphics.draw(assets.menuScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
   elseif gameState == "instructions" then
-    love.graphics.draw(instructionsScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
+    love.graphics.draw(assets.instructionsScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
   elseif gameState == "story" then
-    love.graphics.draw(storyScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
+    love.graphics.draw(assets.storyScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
   elseif gameState == "won" then
-    love.graphics.draw(winScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
+    love.graphics.draw(assets.winScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
   elseif gameState == "gameOver" then
-    love.graphics.draw(gameOverScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
+    love.graphics.draw(assets.gameOverScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
   elseif gameState == "playing" then
     drawMap()
 
@@ -623,7 +626,7 @@ function love.draw()
   end
 end
 
-function resetEverything()
+local function resetEverything()
   lives = 5
   local player = map.layers["Sprites"].player
   player.x = 32
@@ -639,6 +642,11 @@ function resetEverything()
   enemy2.alive = true
   enemy2.dying = false
   enemy2.deathFrame = 0
+
+  bombExploding = false
+  bombExists = false
+
+  playerDirection = DIRECTIONS.down
 end
 
 function love.keypressed(key)
@@ -689,9 +697,6 @@ function love.keypressed(key)
       gameState = "quitting"
     end
   end
-end
-
-function love.keyreleased(key)
 end
 
 function love.focus(f)
