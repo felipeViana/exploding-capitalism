@@ -4,33 +4,36 @@ local getPlayerSprites = require "getPlayerSprites"
 local getEnemySprites = require "getEnemySprites"
 local getBombSprites = require "getBombSprites"
 
-FULLSCREEN = true
+local IMAGES_X = 1920
+local IMAGES_Y = 1080
 
-ENEMY_SPEED = 36
+local FULLSCREEN = true
 
-TILE_SIZE = 32
-SPRITES_SIZE = 600
-SCALE_FACTOR = TILE_SIZE / SPRITES_SIZE
-PLAYER_SPEED = 96 -- pixels per second
+local ENEMY_SPEED = 36
 
-MAP_SCALE_FACTOR = 3
-AVAILABLE_MAP_SIZE = 13
-TOTAL_MAP_SIZE = 15
+local TILE_SIZE = 32
+local SPRITES_SIZE = 600
+local SCALE_FACTOR = TILE_SIZE / SPRITES_SIZE
+local PLAYER_SPEED = 96 -- pixels per second
 
-DIRECTIONS = {
+local MAP_SCALE_FACTOR = 3
+local AVAILABLE_MAP_SIZE = 13
+local TOTAL_MAP_SIZE = 15
+
+local DIRECTIONS = {
   up = {},
   down = {},
   left = {},
   right = {},
 }
-playerDirection = DIRECTIONS.down
+local playerDirection = DIRECTIONS.down
 
 animationTime = 24
 walkingFrame = 0
 walking = false
 
-deployBomb = false
-bombExists = false
+local deployBomb = false
+local bombExists = false
 
 bombX = -1
 bombY = -1
@@ -587,9 +590,10 @@ function drawMap()
 end
 
 function love.draw()
-  local screenScale = 0.75
-  local screenPositionX = 100
-  local screenPositionY = 100
+  local screenScale = love.graphics.getWidth() / IMAGES_X
+  local screenPositionX = 0
+  local dy = love.graphics.getHeight() - screenScale * IMAGES_Y
+  local screenPositionY = dy/2
 
   if gameState == "menu" then
     love.graphics.draw(menuScreen, screenPositionX, screenPositionY, 0, screenScale, screenScale)
